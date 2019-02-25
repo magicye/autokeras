@@ -1,3 +1,4 @@
+import torch
 from autokeras.nn.generator import CnnGenerator, ResNetGenerator, DenseNetGenerator
 from autokeras.nn.graph import *
 from tests.common import get_conv_data, get_add_skip_model, get_conv_dense_model, get_pooling_model, \
@@ -160,25 +161,6 @@ def test_node_consistency():
 
     for layer in graph.layer_list:
         assert layer.output.shape == layer.output_shape
-
-
-def test_produce_keras_model():
-    for graph in [get_conv_dense_model(),
-                  get_add_skip_model(),
-                  get_pooling_model(),
-                  get_concat_skip_model()]:
-        model = graph.produce_keras_model()
-        assert isinstance(model, keras.models.Model)
-
-
-def test_keras_model():
-    for graph in [get_conv_dense_model(),
-                  get_add_skip_model(),
-                  get_pooling_model(),
-                  get_concat_skip_model()]:
-        keras_model = KerasModel(graph)
-        keras_model.set_weight_to_graph()
-        assert isinstance(keras_model, KerasModel)
 
 
 def test_graph_size():

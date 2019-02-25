@@ -1,8 +1,8 @@
 <img src="https://github.com/jhfjhfj1/autokeras/blob/master/logo.png?raw=true" alt="drawing" width="400px" style="display: block; margin-left: auto; margin-right: auto"/>
 
 [![Build Status](https://travis-ci.org/jhfjhfj1/autokeras.svg?branch=master)](https://travis-ci.org/jhfjhfj1/autokeras)
-[![Coverage Status](https://coveralls.io/repos/github/jhfjhfj1/autokeras/badge.svg?branch=master)](https://coveralls.io/github/jhfjhfj1/autokeras?branch=master)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2a3b9e38e4904bd9a20554146c626b4a)](https://app.codacy.com/app/jhfjhfj1/autokeras?utm_source=github.com&utm_medium=referral&utm_content=jhfjhfj1/autokeras&utm_campaign=Badge_Grade_Settings)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/620bd322918c476aa33230ec911a4301)](https://www.codacy.com/app/jhfjhfj1/autokeras?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=jhfjhfj1/autokeras&amp;utm_campaign=Badge_Grade)
+[![Coverage Status](https://coveralls.io/repos/github/jhfjhfj1/autokeras/badge.svg)](https://coveralls.io/github/jhfjhfj1/autokeras)
 <a href="https://badge.fury.io/py/autokeras"><img src="https://badge.fury.io/py/autokeras.svg" alt="PyPI version" style="width: 125px"></a>
 
 Official Website: [autokeras.com](https://autokeras.com)
@@ -23,12 +23,6 @@ Here is a short example of using the package.
     clf.fit(x_train, y_train)
     results = clf.predict(x_test)
 
-## Community
-
-You can use Gitter to communicate with people who also interested in Auto-Keras.
-
-<a href="https://gitter.im/autokeras/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/autokeras/Lobby.svg" alt="Join the chat at https://gitter.im/autokeras/Lobby" style="width: 92px"></a>
-
 ## Cite this work
 
 Auto-Keras: Efficient Neural Architecture Search with Network Morphism.
@@ -46,6 +40,19 @@ Biblatex entry:
       eprinttype   = {arXiv},
       eprint       = {cs.LG/1806.10282},
     }
+
+## Community
+
+You can use Gitter to communicate with people who also interested in Auto-Keras.
+<a href="https://gitter.im/autokeras/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"><img src="https://badges.gitter.im/autokeras/Lobby.svg" alt="Join the chat at https://gitter.im/autokeras/Lobby" style="width: 92px"></a>
+
+You can also follow us on Twitter [@autokeras](https://twitter.com/autokeras) for the latest news.
+
+## Contributing Code
+
+You can follow the [Contributing Guide](https://autokeras.com/temp/contribute/) for details.
+The easist way to contribute is to resolve the issues with the "[call for contributors](https://github.com/jhfjhfj1/autokeras/labels/call%20for%20contributors)" tag.
+They are friendly to beginners.
  
 ## Support Auto-Keras
 

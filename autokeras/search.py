@@ -4,19 +4,19 @@ import queue
 import re
 import sys
 import time
-from datetime import datetime
-from abc import abstractmethod
-
 import torch
 import torch.multiprocessing as mp
 
+
+from abc import ABC, abstractmethod
+from datetime import datetime
 from autokeras.bayesian import BayesianOptimizer
 from autokeras.constant import Constant
 from autokeras.nn.model_trainer import ModelTrainer
 from autokeras.utils import pickle_to_file, pickle_from_file, verbose_print, get_system
 
 
-class Searcher:
+class Searcher(ABC):
     """The base class to search for neural architectures.
 
     This class generate new architectures, call the trainer to train it, and update the optimizer.
@@ -85,10 +85,12 @@ class Searcher:
         self.training_queue = []
         self.x_queue = []
         self.y_queue = []
+
         logging.basicConfig(filename=os.path.join(self.path, datetime.now().strftime('run_%d_%m_%Y : _%H_%M.log')),
                             format='%(asctime)s - %(filename)s - %(message)s', level=logging.DEBUG)
 
         self._timeout = None
+
 
     def load_model_by_id(self, model_id):
         return pickle_from_file(os.path.join(self.path, str(model_id) + '.graph'))
@@ -233,7 +235,15 @@ class Searcher:
         pass
 
     @abstractmethod
-    def update(self, *args):
+    def update(self, other_info, model_id, graph, metric_value):
+        """ Update the controller with evaluation result of a neural architecture.
+
+        Args:
+            other_info: Anything. In the case of default bayesian searcher, it is the father ID in the search tree.
+            model_id: An integer.
+            graph: An instance of Graph. The trained neural architecture.
+            metric_value: The final evaluated metric value.
+        """
         pass
 
     def add_model(self, metric_value, loss, graph, model_id):
@@ -354,7 +364,16 @@ def train(q, graph, train_data, test_data, trainer_args, metric, loss, verbose, 
         if q:
             q.put((None, None, None))
         return None, None, None
-    except TimeoutError:
+    except TimeoutError as exp:
+        logging.warning("TimeoutError occurred at train() : {0}".format(str(exp)))
         if q:
             q.put((None, None, None))
         return None, None, None
+    except Exception as exp:
+        logging.warning("Exception occurred at train() : {0}".format(str(exp)))
+        if verbose:
+            print("Exception occurred at train() : {0}".format(str(exp)))
+        if q:
+            q.put((None, None, None))
+        return None, None, None
+

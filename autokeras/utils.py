@@ -1,20 +1,25 @@
 import csv
+import itertools
+import logging
 import os
 import pickle
+import random
+import string
 import sys
 import tempfile
 import zipfile
-import logging
-import itertools
+from os import makedirs
+from os.path import dirname
+from os.path import exists
+from sys import stdout
 
 import imageio
 import numpy as np
 import requests
 import torch
-import string
-import random
-from autokeras.constant import Constant
 from scipy.ndimage import zoom
+
+from autokeras.constant import Constant
 
 
 class NoImprovementError(Exception):
@@ -130,14 +135,6 @@ def download_file(file_link, file_path):
                     sys.stdout.flush()
 
 
-def download_model(model_link, model_file_name):
-    temp_path = temp_path_generator()
-    ensure_dir(temp_path)
-    model_path = f'{temp_path}/{model_file_name}'
-    download_file(model_link, model_path)
-    return model_path
-
-
 def download_file_with_extract(file_link, file_path, extract_path):
     """Download the file specified in `file_link`, save to `file_path` and extract to the directory `extract_path`."""
     if not os.path.exists(extract_path):
@@ -231,6 +228,17 @@ def read_csv_file(csv_file_path):
     return file_names, file_labels
 
 
+def read_tsv_file(input_file, quotechar=None):
+    """Reads a tab separated value (tsv) file and return two lists containing file names and labels."""
+    with open(input_file, "r", encoding='utf-8') as f:
+        reader = csv.reader(f, delimiter="\t", quotechar=quotechar)
+        x, y = [], []
+        for line in reader:
+            x.append(line[0])
+            y.append(int(line[1]))
+        return x, y
+
+
 def read_image(img_path):
     """Read the image contained in the provided path `image_path`."""
     img = imageio.imread(uri=img_path)
@@ -307,3 +315,57 @@ def get_system():
         return Constant.SYS_WINDOWS
 
     raise EnvironmentError('Unsupported environment')
+
+
+def download_file_from_google_drive(file_id, dest_path, verbose=False):
+    """
+    Downloads a shared file from google drive into a given folder.
+    Optionally unzips it.
+
+    Refact from:
+    https://github.com/ndrplz/google-drive-downloader/blob/master/google_drive_downloader/google_drive_downloader.py
+
+    Args:
+        verbose:
+        file_id: str
+            the file identifier.
+            You can obtain it from the sharable link.
+        dest_path: str
+            the destination where to save the downloaded file.
+            Must be a path (for example: './downloaded_file.txt')
+    """
+
+    destination_directory = dirname(dest_path)
+    if len(destination_directory) > 0 and not exists(destination_directory):
+        makedirs(destination_directory)
+
+    session = requests.Session()
+
+    if verbose:
+        print('Downloading file with Google ID {} into {}... '.format(file_id, dest_path), end='')
+    stdout.flush()
+
+    response = session.get(Constant.DOWNLOAD_URL, params={'id': file_id}, stream=True)
+
+    token = get_confirm_token(response)
+    if token:
+        params = {'id': file_id, 'confirm': token}
+        response = session.get(Constant.DOWNLOAD_URL, params=params, stream=True)
+
+    save_response_content(response, dest_path)
+    if verbose:
+        print('Download completed.')
+
+
+def get_confirm_token(response):
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            return value
+    return None
+
+
+def save_response_content(response, destination):
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(Constant.CHUNK_SIZE):
+            if chunk:  # filter out keep-alive new chunks
+                f.write(chunk)

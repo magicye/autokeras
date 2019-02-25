@@ -8,12 +8,14 @@ from autokeras.constant import Constant
 
 
 class TorchConcatenate(nn.Module):
-    def forward(self, input_list):
+    @staticmethod
+    def forward(input_list):
         return torch.cat(input_list, dim=1)
 
 
 class TorchAdd(nn.Module):
-    def forward(self, input_list):
+    @staticmethod
+    def forward(input_list):
         return input_list[0] + input_list[1]
 
 
@@ -62,19 +64,14 @@ class StubLayer:
     def import_weights(self, torch_layer):
         pass
 
-    def import_weights_keras(self, keras_layer):
-        pass
-
     def export_weights(self, torch_layer):
-        pass
-
-    def export_weights_keras(self, keras_layer):
         pass
 
     def get_weights(self):
         return self.weights
 
-    def size(self):
+    @staticmethod
+    def size():
         return 0
 
     @property
@@ -93,15 +90,9 @@ class StubWeightBiasLayer(StubLayer):
     def import_weights(self, torch_layer):
         self.set_weights((torch_layer.weight.data.cpu().numpy(), torch_layer.bias.data.cpu().numpy()))
 
-    def import_weights_keras(self, keras_layer):
-        self.set_weights(keras_layer.get_weights())
-
     def export_weights(self, torch_layer):
         torch_layer.weight.data = torch.Tensor(self.weights[0])
         torch_layer.bias.data = torch.Tensor(self.weights[1])
-
-    def export_weights_keras(self, keras_layer):
-        keras_layer.set_weights(self.weights)
 
 
 class StubBatchNormalization(StubWeightBiasLayer):
@@ -157,12 +148,6 @@ class StubDense(StubWeightBiasLayer):
     def output_shape(self):
         return self.units,
 
-    def import_weights_keras(self, keras_layer):
-        self.set_weights((keras_layer.get_weights()[0].T, keras_layer.get_weights()[1]))
-
-    def export_weights_keras(self, keras_layer):
-        keras_layer.set_weights((self.weights[0].T, self.weights[1]))
-
     def size(self):
         return self.input_units * self.units + self.units
 
@@ -187,12 +172,6 @@ class StubConv(StubWeightBiasLayer):
             ret[index] = int((dim + 2 * self.padding - self.kernel_size) / self.stride) + 1
         ret = ret + [self.filters]
         return tuple(ret)
-
-    def import_weights_keras(self, keras_layer):
-        self.set_weights((keras_layer.get_weights()[0].T, keras_layer.get_weights()[1]))
-
-    def export_weights_keras(self, keras_layer):
-        keras_layer.set_weights((self.weights[0].T, self.weights[1]))
 
     def size(self):
         return self.filters * self.kernel_size * self.kernel_size + self.filters
@@ -414,62 +393,12 @@ def layer_width(layer):
     raise TypeError('The layer should be either Dense or Conv layer.')
 
 
-def keras_dropout(layer, rate):
-    from keras import layers
-    input_dim = len(layer.input.shape)
-    if input_dim == 2:
-        return layers.SpatialDropout1D(rate)
-    elif input_dim == 3:
-        return layers.SpatialDropout2D(rate)
-    elif input_dim == 4:
-        return layers.SpatialDropout3D(rate)
-    else:
-        return layers.Dropout(rate)
-
-
-def to_real_keras_layer(layer):
-    from keras import layers
-    if is_layer(layer, LayerType.DENSE):
-        return layers.Dense(layer.units, input_shape=(layer.input_units,))
-    if is_layer(layer, LayerType.CONV):
-        return layers.Conv2D(layer.filters,
-                             layer.kernel_size,
-                             input_shape=layer.input.shape,
-                             padding='same')  # padding
-    if is_layer(layer, LayerType.POOL):
-        return layers.MaxPool2D(2)
-    if is_layer(layer, LayerType.BATCH_NORM):
-        return layers.BatchNormalization(input_shape=layer.input.shape)
-    if is_layer(layer, LayerType.CONCAT):
-        return layers.Concatenate()
-    if is_layer(layer, LayerType.ADD):
-        return layers.Add()
-    if is_layer(layer, LayerType.DROPOUT):
-        return keras_dropout(layer, layer.rate)
-    if is_layer(layer, LayerType.RELU):
-        return layers.Activation('relu')
-    if is_layer(layer, LayerType.SOFTMAX):
-        return layers.Activation('softmax')
-    if is_layer(layer, LayerType.FLATTEN):
-        return layers.Flatten()
-    if is_layer(layer, LayerType.GLOBAL_POOL):
-        return layers.GlobalAveragePooling2D()
-
-
 def set_torch_weight_to_stub(torch_layer, stub_layer):
     stub_layer.import_weights(torch_layer)
 
 
-def set_keras_weight_to_stub(keras_layer, stub_layer):
-    stub_layer.import_weights_keras(keras_layer)
-
-
 def set_stub_weight_to_torch(stub_layer, torch_layer):
     stub_layer.export_weights(torch_layer)
-
-
-def set_stub_weight_to_keras(stub_layer, keras_layer):
-    stub_layer.export_weights_keras(keras_layer)
 
 
 def get_conv_class(n_dim):
